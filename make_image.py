@@ -236,20 +236,25 @@ def main():
     draw.text((40, strip_y + 20), "ALSO TODAY", font=af, fill=AMBER)
     aw = text_w(draw, "ALSO TODAY  ", af)
     checks.append(("ALSO TODAY", af, 944))
-    ticker = "Nvidia lifts its sales outlook \u00b7 GTA VI launches to rave reviews \u00b7 North Korea expands its uranium plant"
-    sf = font(FONT_SANS, 22)
-    ticker_lines = wrap_lines(draw, ticker, sf, 944 - int(aw))
-    if len(ticker_lines) > 2:
-        ticker = "Nvidia lifts sales outlook \u00b7 GTA VI launches to rave reviews \u00b7 North Korea expands uranium plant"
-        ticker_lines = wrap_lines(draw, ticker, sf, 944 - int(aw))
-    if len(ticker_lines) > 2:
-        raise RuntimeError("ticker cannot fit")
+    ticker = "Nvidia lifts outlook \u00b7 GTA VI launches \u00b7 N. Korea expands uranium plant"
+    sf_size = 20
+    sf = font(FONT_SANS, sf_size)
+    ticker_w = text_w(draw, ticker, sf)
+    if int(aw) + 4 + int(ticker_w) > 944:
+        sf_size = 19
+        sf = font(FONT_SANS, sf_size)
+        ticker_w = text_w(draw, ticker, sf)
+    if int(aw) + 4 + int(ticker_w) > 944:
+        raise RuntimeError(f"ticker still too wide: {ticker!r} ({int(aw)+4+int(ticker_w)} > 944)")
     tx = 40 + int(aw) + 4
-    ty = strip_y + 20
-    for ln in ticker_lines:
-        draw.text((tx, ty), ln, font=sf, fill=GREY)
-        checks.append((ln, sf, 944 - int(aw)))
-        ty += 26
+    # vertically centre single line in 64px strip (strip_y = H-64)
+    ty = strip_y + (64 - sf_size) // 2
+    draw.text((tx, ty), ticker, font=sf, fill=GREY)
+    checks.append((ticker, sf, 944 - int(aw)))
+    # vertical rule: last drawn baseline + font height <= H-4
+    last_baseline_plus = ty + sf_size
+    if last_baseline_plus > (H - 4):
+        raise RuntimeError(f"ticker vertical overflow: ty+sf_size={last_baseline_plus} > {H-4}")
 
     for txt, f, mw in checks:
         if text_w(draw, txt, f) > mw + 0.5:
